@@ -129,10 +129,12 @@ function countNodes(root) {
 function drawTree(rc, root) {
 	rc.translate(root.x, root.y);
 	
-	rc.strokeStyle = "rgb(192,192,192)";
-	rc.beginPath();
-	rc.arc(root.circ.x, root.circ.y, root.circ.r, 0, Math.PI*2, false);
-	rc.stroke();
+	if (root.circ.r > NODE_BASE_R+0.1) {
+		rc.strokeStyle = "rgb(192,192,192)";
+		rc.beginPath();
+		rc.arc(root.circ.x, root.circ.y, root.circ.r, 0, Math.PI*2, false);
+		rc.stroke();
+	}
 	
 	rc.strokeStyle = "black";
 	rc.beginPath();
@@ -164,7 +166,7 @@ setInterval(function() {
 	rc.clearRect(0, 0, canvas.width, canvas.height);
 	drawTree(rc, root);
 	//console.timeEnd("draw")
-}, 100);
+}, 32);
 
 canvas.onclick = function(e) {
 	var x = e.pageX;
