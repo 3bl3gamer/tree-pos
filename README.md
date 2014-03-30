@@ -3,11 +3,12 @@ Tree nodes position calculator
 
 ## Попытка номер раз
 
-`1.html`
+http://3bl3gamer.no-ip.org/tree-pos/1.html
 
 ![First version](https://raw.githubusercontent.com/3bl3gamer/tree-pos/master/img/1.png "First version")
 
 Более ранний, простой и медленный способ.
+
 
 ### Суть проста:
 
@@ -18,19 +19,21 @@ Tree nodes position calculator
 Особенно медленный последний пункт.
 
 
+
 ## Попытка номер два
 
-`2.html`
+http://3bl3gamer.no-ip.org/tree-pos/2.html
 
 ![Second version](https://raw.githubusercontent.com/3bl3gamer/tree-pos/master/img/2.png "Second version")
 
 Второй способ. Сложнее и СИЛЬНО быстрее.
 
+
 ### Суть:
 
  * у ноды кроме координат появляется "маска" (`circ`) с координатами и радиусом (серые каруги на скрине)
  * координаты нод считаются относительно родителя
- * все дочки каждой ноды вписаны в "маску" этой ноды
+ * все дочки каждой ноды и сама нода вписаны в "маску" этой ноды
  * все дочки каждой ноды (1го уровня) притягиваются друг у другу (`verletNodes`)
  * все дочки каждой ноды взаимно притягиваются к этой ноде (`verletNodeTo00`)
  * притяжение нод работает всё по тому же Верле
@@ -38,3 +41,12 @@ Tree nodes position calculator
  * вместе с Верле на каждом шаге обновляется расположение и радиус маски каждой ноды (`updNodeRadius`)
 
 По сравнению с первым вариантом вычисления ускорились раз в 1000 (для дерева примерно из 1700 нод).
+
+
+#### В качестве доп. пояснения
+
+Где `circ`, и как он считается:
+
+![Help for second](https://raw.githubusercontent.com/3bl3gamer/tree-pos/master/img/2.1.png "Help for second")
+
+Например, если у ноды потомков нет, её "маска" радиусом с саму ноду.
