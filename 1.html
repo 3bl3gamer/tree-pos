@@ -1,0 +1,135 @@
+<body style="margin:0;">
+<canvas id="canvas" width=1024 height=1024 style="outline: 1px solid;"></canvas>
+<script>
+function pointDistance(x0, y0, x1, y1) {
+	return Math.sqrt((x1-x0)*(x1-x0) + (y1-y0)*(y1-y0));
+}
+function randRound(x, d) {
+	return x + Math.random()*d*2 - d;
+}
+
+function Node(x,y) {
+	this.x = x;
+	this.y = y;
+	this.children = [];
+}
+
+function genSubtree(root, lvls) {
+	if (lvls == 0) return;
+	var n = Math.random()*5;
+	for (var i=0; i<n; i++) {
+		var dis = 128*2/(lvls+2)
+		var node = new Node(randRound(root.x,dis), randRound(root.y,dis));
+		root.children.push(node);
+		genSubtree(node, lvls-1);
+	}
+}
+function genTree() {
+	var root = new Node(canvas.width/2, canvas.height/2);
+	genSubtree(root, 4);
+	return root;
+}
+
+function pushFromTreeNodes(node, root) {
+	for (var i=0; i<root.children.length; i++) {
+		var ch = root.children[i];
+		if (ch === node) continue;
+		var dis = pointDistance(node.x, node.y, ch.x, ch.y);
+		if (dis < 1) dis = 1;
+		var dx = (ch.x-node.x)/dis/Math.pow(dis, 1.5)*32;
+		var dy = (ch.y-node.y)/dis/Math.pow(dis, 1.5)*32;
+		node.x -= dx;
+		node.y -= dy;
+		ch.x += dx;
+		ch.y += dy;
+	}
+	
+	for (var i=0; i<root.children.length; i++) {
+		pushFromTreeNodes(node, root.children[i]);
+	}
+}
+function pushEachNodeFromWholeTree(node, treeRoot) {
+	pushFromTreeNodes(node, treeRoot);
+	for (var i=0; i<node.children.length; i++) {
+		pushEachNodeFromWholeTree(node.children[i], treeRoot);
+	}
+}
+function compressTree(root) {
+	for (var i=0; i<root.children.length; i++) {
+		var ch = root.children[i];
+		var dis = pointDistance(root.x, root.y, ch.x, ch.y);
+		if (dis < 1) dis = 1;
+		var dx = (ch.x-root.x)/dis*(dis-24)/2;
+		var dy = (ch.y-root.y)/dis*(dis-24)/2;
+		root.x += dx;
+		root.y += dy;
+		ch.x -= dx;
+		ch.y -= dy;
+	}
+	
+	for (var i=0; i<root.children.length; i++) {
+		compressTree(root.children[i]);
+	}
+}
+function updTree(root) {
+	pushEachNodeFromWholeTree(root, root);
+	compressTree(root);
+}
+
+function getNearestNode(x, y, root) {
+	var nn = root;
+	var nd = pointDistance(x, y, root.x, root.y);
+	for (var i=0; i<root.children.length; i++) {
+		var res = getNearestNode(x, y, root.children[i]);
+		if (res.dis < nd) {nn = res.node; nd = res.dis;}
+	}
+	return {node: nn, dis: nd};
+}
+
+function countNodes(root) {
+	var count = 1;
+	for (var i=0; i<root.children.length; i++) {
+		count += countNodes(root.children[i]);
+	}
+	return count;
+}
+
+function drawTree(rc, root) {
+	rc.beginPath();
+	rc.arc(root.x, root.y, 5, 0, Math.PI*2, false);
+	rc.stroke();
+	
+	rc.beginPath();
+	for (var i=0; i<root.children.length; i++) {
+		rc.moveTo(root.x, root.y);
+		rc.lineTo(root.children[i].x, root.children[i].y);
+	}
+	rc.stroke();
+	
+	for (var i=0; i<root.children.length; i++) {
+		drawTree(rc, root.children[i]);
+	}
+}
+
+var rc = canvas.getContext("2d");
+var root = genTree();
+drawTree(rc, root);
+setInterval(function() {
+	//console.time("update positions")
+	updTree(root);
+	//console.timeEnd("update positions")
+	
+	//console.time("draw")
+	rc.clearRect(0, 0, canvas.width, canvas.height);
+	drawTree(rc, root);
+	//console.timeEnd("draw")
+}, 100);
+
+canvas.onclick = function(e) {
+	var x = e.pageX;
+	var y = e.pageY;
+	var node = getNearestNode(x, y, root).node;
+	node.children.push(new Node(x,y));
+}
+</script>
+</body>

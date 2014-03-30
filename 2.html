@@ -1,0 +1,176 @@
+<body style="margin:0;">
+<canvas id="canvas" width=1024 height=1024 style="outline: 1px solid;"></canvas>
+<script>
+function pointDistance(x0, y0, x1, y1) {
+	return Math.sqrt((x1-x0)*(x1-x0) + (y1-y0)*(y1-y0));
+}
+function nodeDistance(n0, n1) {
+	return Math.sqrt((n1.x-n0.x)*(n1.x-n0.x) + (n1.y-n0.y)*(n1.y-n0.y));
+}
+function nodeCircDistance(n0, n1) {
+	var dx = n0.x + n0.circ.x - n1.x - n1.circ.x;
+	var dy = n0.y + n0.circ.y - n1.y - n1.circ.y;
+	return Math.sqrt(dx*dx + dy*dy);
+}
+function randRound(x, d) {
+	return x + Math.random()*d*2 - d;
+}
+
+const NODE_BASE_R = 5;
+
+function Node(x,y) {
+	this.x = x;
+	this.y = y;
+	this.circ = {x:0, y:0, r:NODE_BASE_R};
+	this.children = [];
+}
+
+function genSubtree(root, lvls) {
+	if (lvls == 0) return;
+	var n = 1+lvls/2+Math.random()*5;
+	for (var i=0; i<n; i++) {
+		var dis = 8*2/(lvls+2)
+		var node = new Node(randRound(0,dis), randRound(0,dis));
+		root.children.push(node);
+		genSubtree(node, lvls-1);
+	}
+}
+function genTree() {
+	var root = new Node(canvas.width/2, canvas.height/2);
+	genSubtree(root, 4);
+	//genSubtree(root.children[0], 1);
+	return root;
+}
+
+function verletNodes(n0, n1) {
+	var dis = nodeCircDistance(n0, n1);
+	var collision_dis = (n0.circ.r+n1.circ.r)*1.1+1;
+	if (dis > collision_dis) return;
+	if (dis < 1) dis = 1;
+	var dx = (n1.x+n1.circ.x - n0.x-n0.circ.x)/dis*(dis-collision_dis)/2;
+	var dy = (n1.y+n1.circ.y - n0.y-n0.circ.y)/dis*(dis-collision_dis)/2;
+	n0.x += dx;
+	n0.y += dy;
+	n1.x -= dx;
+	n1.y -= dy;
+}
+function verletNodeTo00(node) {
+	var dis = pointDistance(-node.x, -node.y, node.circ.x, node.circ.y);//Math.sqrt(node.x*node.x + node.y*node.y);
+	if (dis < 1) dis = 1;
+	var collision_dis = (NODE_BASE_R + node.circ.r)*1.1+1;
+	var k = (dis-collision_dis) / (dis < collision_dis ? 2 : 8);
+	var dx = (node.x+node.circ.x)/dis*k;
+	var dy = (node.y+node.circ.y)/dis*k;
+	node.x -= dx;
+	node.y -= dy;
+}
+function compressNode(root) {
+	for (var i=0; i<root.children.length; i++) {
+		for (var j=i+1; j<root.children.length; j++) {
+			verletNodes(root.children[i], root.children[j]);
+		}
+		verletNodeTo00(root.children[i]);
+	}
+}
+function updNodeRadius(node) {
+	node.circ.r *= 0.9;
+	if (node.circ.r < NODE_BASE_R) node.circ.r = NODE_BASE_R;
+	for (var i=0; i<node.children.length; i++) {
+		var ch = node.children[i];
+		var dx = node.circ.x - ch.x-ch.circ.x;
+		var dy = node.circ.y - ch.y-ch.circ.y;
+		var dis = Math.sqrt(dx*dx+dy*dy);
+		var nr = dis + ch.circ.r;
+		if (nr > node.circ.r) {
+			node.circ.x -= dx/dis * (nr-node.circ.r)/2/2;
+			node.circ.y -= dy/dis * (nr-node.circ.r)/2/2;
+			node.circ.r += (nr - node.circ.r)/2;
+		}
+	}
+	
+	var dx = node.circ.x;
+	var dy = node.circ.y;
+	var dis = Math.sqrt(dx*dx+dy*dy);
+	var nr = dis + NODE_BASE_R;
+	if (nr > node.circ.r) {
+		node.circ.x -= dx/dis * (nr-node.circ.r)/2/2;
+		node.circ.y -= dy/dis * (nr-node.circ.r)/2/2;
+		node.circ.r += (nr - node.circ.r)/2;
+	}
+}
+function updTree(root) {
+	//if (root.children.length == 0) return;
+	compressNode(root);
+	updNodeRadius(root);
+	for (var i=0; i<root.children.length; i++) {
+		updTree(root.children[i]);
+	}
+}
+
+function getNearestNode(x, y, root) {
+	var nn = root;
+	var nd = pointDistance(x, y, root.x, root.y);
+	var nx = 0, ny = 0;
+	for (var i=0; i<root.children.length; i++) {
+		var res = getNearestNode(x-root.x, y-root.y, root.children[i]);
+		if (res.dis < nd) {nn = res.node; nd = res.dis; nx=res.x; ny=res.y;}
+	}
+	return {node: nn, dis: nd, x: root.x+nx, y: root.y+ny};
+}
+
+function countNodes(root) {
+	var count = 1;
+	for (var i=0; i<root.children.length; i++) {
+		count += countNodes(root.children[i]);
+	}
+	return count;
+}
+
+function drawTree(rc, root) {
+	rc.translate(root.x, root.y);
+	
+	rc.strokeStyle = "rgb(192,192,192)";
+	rc.beginPath();
+	rc.arc(root.circ.x, root.circ.y, root.circ.r, 0, Math.PI*2, false);
+	rc.stroke();
+	
+	rc.strokeStyle = "black";
+	rc.beginPath();
+	rc.arc(0, 0, 5, 0, Math.PI*2, false);
+	rc.stroke();
+	
+	rc.beginPath();
+	for (var i=0; i<root.children.length; i++) {
+		rc.moveTo(0, 0);
+		rc.lineTo(root.children[i].x, root.children[i].y);
+	}
+	rc.stroke();
+	
+	for (var i=0; i<root.children.length; i++) {
+		drawTree(rc, root.children[i]);
+	}
+	rc.translate(-root.x, -root.y);
+}
+
+var rc = canvas.getContext("2d");
+var root = genTree();
+drawTree(rc, root);
+setInterval(function() {
+	//console.time("update positions")
+	updTree(root);
+	//console.timeEnd("update positions")
+	
+	//console.time("draw")
+	rc.clearRect(0, 0, canvas.width, canvas.height);
+	drawTree(rc, root);
+	//console.timeEnd("draw")
+}, 100);
+
+canvas.onclick = function(e) {
+	var x = e.pageX;
+	var y = e.pageY;
+	var res = getNearestNode(x, y, root)
+	res.node.children.push(new Node(x-res.x, y-res.y));
+}
+</script>
+</body>
