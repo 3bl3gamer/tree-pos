@@ -3,11 +3,11 @@ Tree nodes position calculator
 
 ## Попытка номер раз
 
-http://3bl3gamer.no-ip.org/tree-pos/1.html
+https://3bl3gamer.github.io/tree-pos/1.html
 
-![First version](https://raw.githubusercontent.com/3bl3gamer/tree-pos/master/img/1.png "First version")
+![First version](https://3bl3gamer.github.io/tree-pos/img/1.png "First version")
 
-Более ранний, простой и медленный способ.
+Первый, простой и медленный способ.
 
 
 ### Суть проста:
@@ -22,9 +22,9 @@ http://3bl3gamer.no-ip.org/tree-pos/1.html
 
 ## Попытка номер два
 
-http://3bl3gamer.no-ip.org/tree-pos/2.html
+https://3bl3gamer.github.io/tree-pos/2.html
 
-![Second version](https://raw.githubusercontent.com/3bl3gamer/tree-pos/master/img/2.png "Second version")
+![Second version](https://3bl3gamer.github.io/tree-pos/img/2.png "Second version")
 
 Второй способ. Сложнее и СИЛЬНО быстрее.
 
@@ -47,6 +47,6 @@ http://3bl3gamer.no-ip.org/tree-pos/2.html
 
 Где `circ`, и как он считается:
 
-![Help for second](https://raw.githubusercontent.com/3bl3gamer/tree-pos/master/img/2.1.png "Help for second")
+![Help for second](https://3bl3gamer.github.io/tree-pos/img/2.1.png "Help for second")
 
 Например, если у ноды потомков нет, её "маска" радиусом с саму ноду.
